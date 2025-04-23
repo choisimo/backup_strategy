@@ -65,6 +65,7 @@ load_defaults() {
     BACKUP_SOURCE_DIR="./"
     BACKUP_DEST_DIR="~/backup"
     BACKUP_LOG_DIR="./backup"
+    BACKUP_TYPE="full"
     REMOTE_SERVER=""
     REMOTE_HOST=""
     REMOTE_PORT="22"
@@ -881,6 +882,32 @@ run_in_background() {
     echo "tail -f $log_file"
     exit 0
 }
+
+set_compression_level() {
+    if [ -n "$COMPRESSION_LEVEL" ]; then
+        # Validate compression level (0-9)
+        if [[ "$COMPRESSION_LEVEL" =~ ^[0-9]$ ]]; then
+            echo -e "${BLUE}압축 레벨 설정: $COMPRESSION_LEVEL${NC}"
+            # For rsync, compression level is set with -z (compress) and --compress-level=N
+            SYNC_OPTIONS="$SYNC_OPTIONS -z --compress-level=$COMPRESSION_LEVEL"
+        else
+            echo -e "${YELLOW}유효하지 않은 압축 레벨: $COMPRESSION_LEVEL (0-9 사이 값 사용)${NC}"
+        fi
+    fi
+}
+
+# Set bandwidth limit for rsync
+set_bandwidth_limit() {
+    if [ -n "$BANDWIDTH_LIMIT" ]; then
+        if [[ "$BANDWIDTH_LIMIT" =~ ^[0-9]+$ ]]; then
+            echo -e "${BLUE}대역폭 제한 설정: $BANDWIDTH_LIMIT KB/s${NC}"
+            SYNC_OPTIONS="$SYNC_OPTIONS --bwlimit=$BANDWIDTH_LIMIT"
+        else
+            echo -e "${YELLOW}유효하지 않은 대역폭 제한: $BANDWIDTH_LIMIT${NC}"
+        fi
+    fi
+}
+
 
 perform_parallel_backup() {
     local source_dir="$BACKUP_SOURCE_DIR"
